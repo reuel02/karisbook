@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { ToastProvider } from '@/components/ui/Toast'
 
 const _inter = Inter({ subsets: ['latin'] })
 
@@ -25,9 +26,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className="bg-[#080D1A]">
-      <body className="antialiased font-sans bg-[#080D1A] text-[#EEF2FF]">
-        {children}
+    <html lang="pt-BR" className="bg-[#080D1A]" suppressHydrationWarning>
+      <body className="antialiased font-sans bg-[#080D1A] text-[#EEF2FF]" suppressHydrationWarning>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

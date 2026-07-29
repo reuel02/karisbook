@@ -3,26 +3,35 @@
 import { useState } from 'react'
 import { ChevronDown, Phone, Scissors } from 'lucide-react'
 import {
-  Appointment, AppointmentStatus, SERVICES, PROFESSIONALS,
+  Appointment, AppointmentStatus,
   STATUS_LABELS, STATUS_COLORS, formatPrice,
 } from '@/lib/karis-data'
+import { Service, Professional } from '@/lib/karisbook-types'
+import { buildWhatsAppUrl, buildStatusMessage } from '@/lib/whatsapp'
+import { formatDate } from '@/lib/karis-data'
 
 type Props = {
   appointments: Appointment[]
-  onStatusChange: (id: string, status: AppointmentStatus) => void
+  services: Service[]
+  professionals: Professional[]
+  tenantWhatsapp: string
+  notifyWhatsapp: boolean
+  isLoading: boolean
+  onStatusChange: (id: string, status: AppointmentStatus) => Promise<void>
 }
 
 const ALL_STATUSES: AppointmentStatus[] = ['pending', 'confirmed', 'done', 'cancelled']
 
 function StatusDropdown({
-  current, onSelect,
-}: { current: AppointmentStatus; onSelect: (s: AppointmentStatus) => void }) {
+  current, isUpdating, onSelect,
+}: { current: AppointmentStatus; isUpdating: boolean; onSelect: (s: AppointmentStatus) => void }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${STATUS_COLORS[current]}`}
+        onClick={() => !isUpdating && setOpen(!open)}
+        disabled={isUpdating}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${STATUS_COLORS[current]} disabled:opacity-60`}
       >
         {STATUS_LABELS[current]}
         <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -49,14 +58,59 @@ function StatusDropdown({
   )
 }
 
-export default function AgendaTab({ appointments, onStatusChange }: Props) {
-  const sorted = [...appointments].sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
+export default function AgendaTab({
+  appointments, services, professionals,
+  tenantWhatsapp, notifyWhatsapp,
+  isLoading, onStatusChange,
+}: Props) {
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  const sorted = [...appointments].sort((a, b) => a.time_slot.localeCompare(b.time_slot))
 
   const stats = {
-    total: appointments.length,
-    pending: appointments.filter((a) => a.status === 'pending').length,
+    total:     appointments.length,
+    pending:   appointments.filter((a) => a.status === 'pending').length,
     confirmed: appointments.filter((a) => a.status === 'confirmed').length,
-    done: appointments.filter((a) => a.status === 'done').length,
+    done:      appointments.filter((a) => a.status === 'done').length,
+  }
+
+  const handleStatusChange = async (apt: Appointment, newStatus: AppointmentStatus) => {
+    setUpdatingId(apt.id)
+    await onStatusChange(apt.id, newStatus)
+    setUpdatingId(null)
+
+    // WhatsApp notification for confirmed/cancelled
+    if (notifyWhatsapp && (newStatus === 'confirmed' || newStatus === 'cancelled') && apt.client_whatsapp) {
+      const svc = services.find((s) => s.id === apt.service_id)
+      if (svc) {
+        const message = buildStatusMessage({
+          clientName: apt.client_name,
+          status: newStatus as 'confirmed' | 'cancelled',
+          serviceName: svc.name,
+          date: formatDate(apt.date),
+          timeSlot: apt.time_slot,
+        })
+        const url = buildWhatsAppUrl(apt.client_whatsapp, message)
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-20 rounded-xl bg-[#16203D] border border-[rgba(59,130,246,0.1)] animate-pulse" />
+          ))}
+        </div>
+        <div className="flex flex-col gap-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 rounded-xl bg-[#16203D] border border-[rgba(59,130,246,0.1)] animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -64,10 +118,10 @@ export default function AgendaTab({ appointments, onStatusChange }: Props) {
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total', value: stats.total, color: 'text-[#EEF2FF]', bg: 'bg-[#16203D]' },
-          { label: 'Pendentes', value: stats.pending, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-          { label: 'Confirmados', value: stats.confirmed, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Concluídos', value: stats.done, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+          { label: 'Total',       value: stats.total,     color: 'text-[#EEF2FF]',    bg: 'bg-[#16203D]' },
+          { label: 'Pendentes',   value: stats.pending,   color: 'text-amber-400',    bg: 'bg-amber-500/10' },
+          { label: 'Confirmados', value: stats.confirmed, color: 'text-emerald-400',  bg: 'bg-emerald-500/10' },
+          { label: 'Concluídos',  value: stats.done,      color: 'text-indigo-400',   bg: 'bg-indigo-500/10' },
         ].map((stat) => (
           <div key={stat.label} className={`${stat.bg} rounded-xl p-4 border border-[rgba(59,130,246,0.1)]`}>
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
@@ -87,8 +141,8 @@ export default function AgendaTab({ appointments, onStatusChange }: Props) {
           </div>
         )}
         {sorted.map((apt) => {
-          const service = SERVICES.find((s) => s.id === apt.serviceId)
-          const pro = PROFESSIONALS.find((p) => p.id === apt.professionalId)
+          const service = services.find((s) => s.id === apt.service_id)
+          const pro = professionals.find((p) => p.id === apt.professional_id)
           return (
             <div
               key={apt.id}
@@ -96,7 +150,7 @@ export default function AgendaTab({ appointments, onStatusChange }: Props) {
             >
               {/* Time */}
               <div className="shrink-0 w-14 text-center">
-                <p className="text-lg font-bold text-[#EEF2FF] leading-none">{apt.timeSlot}</p>
+                <p className="text-lg font-bold text-[#EEF2FF] leading-none">{apt.time_slot.substring(0, 5)}</p>
               </div>
 
               {/* Divider */}
@@ -104,25 +158,20 @@ export default function AgendaTab({ appointments, onStatusChange }: Props) {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#EEF2FF] truncate">{apt.clientName}</p>
+                <p className="text-sm font-semibold text-[#EEF2FF] truncate">{apt.client_name}</p>
                 <div className="flex items-center gap-3 mt-0.5">
                   <span className="flex items-center gap-1 text-xs text-[#94A3C8]">
-                    <Scissors size={11} />
-                    {service?.name}
+                    <Scissors size={11} />{service?.name}
                   </span>
                   {pro && (
                     <span className="flex items-center gap-1 text-xs text-[#94A3C8]">
-                      <span
-                        className="w-3 h-3 rounded-sm inline-block"
-                        style={{ backgroundColor: pro.color }}
-                      />
+                      <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: pro.color }} />
                       {pro.name}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5 text-xs text-[#4B5E82]">
-                  <Phone size={10} />
-                  {apt.clientWhatsapp}
+                  <Phone size={10} />{apt.client_whatsapp}
                 </div>
               </div>
 
@@ -131,10 +180,11 @@ export default function AgendaTab({ appointments, onStatusChange }: Props) {
                 {service ? formatPrice(service.price) : '—'}
               </p>
 
-              {/* Status badge + dropdown */}
+              {/* Status dropdown */}
               <StatusDropdown
                 current={apt.status}
-                onSelect={(s) => onStatusChange(apt.id, s)}
+                isUpdating={updatingId === apt.id}
+                onSelect={(s) => handleStatusChange(apt, s)}
               />
             </div>
           )

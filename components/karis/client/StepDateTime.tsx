@@ -1,12 +1,14 @@
 'use client'
 
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { BOOKED_SLOTS, TIME_SLOTS } from '@/lib/karis-data'
 
 type Props = {
+  availableSlots: string[]        // computed by the smart slot engine (karisbook-api)
+  isLoadingSlots: boolean
   selectedDate: string | null
   selectedSlot: string | null
+  closedDays: number[]            // day_of_week (0-6) where is_open = false
   onDateChange: (date: string) => void
   onSlotChange: (slot: string) => void
 }
@@ -32,7 +34,12 @@ function buildCalendarDays(year: number, month: number) {
   return [...blanks, ...days]
 }
 
-export default function StepDateTime({ selectedDate, selectedSlot, onDateChange, onSlotChange }: Props) {
+export default function StepDateTime({
+  availableSlots, isLoadingSlots,
+  selectedDate, selectedSlot,
+  closedDays,
+  onDateChange, onSlotChange,
+}: Props) {
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -50,47 +57,30 @@ export default function StepDateTime({ selectedDate, selectedSlot, onDateChange,
 
   const canGoPrev = !(viewYear === today.getFullYear() && viewMonth === today.getMonth())
 
-  const bookedForDay = selectedDate ? (BOOKED_SLOTS[selectedDate] ?? []) : []
-  const currentHour = today.getHours()
-  const currentMinute = today.getMinutes()
-
-  const isSlotDisabled = (slot: string) => {
-    if (bookedForDay.includes(slot)) return true
-    if (selectedDate === toISODate(today)) {
-      const [h, m] = slot.split(':').map(Number)
-      if (h < currentHour || (h === currentHour && m <= currentMinute)) return true
-    }
-    return false
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-[#EEF2FF] text-balance">
-          Data e Horário
-        </h2>
-        <p className="text-sm text-[#94A3C8] mt-1">
-          Escolha quando você quer ser atendido
-        </p>
+        <h2 className="text-xl font-semibold text-[var(--text-main)] text-balance">Data e Horário</h2>
+        <p className="text-sm text-[var(--text-muted)] mt-1">Escolha quando você quer ser atendido</p>
       </div>
 
       {/* Calendar */}
-      <div className="bg-[#16203D] rounded-2xl border border-[rgba(59,130,246,0.14)] p-4">
+      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] p-4">
         {/* Calendar header */}
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={prevMonth}
             disabled={!canGoPrev}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3C8] hover:text-[#EEF2FF] hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--border-color)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
-          <p className="text-sm font-semibold text-[#EEF2FF]">
+          <p className="text-sm font-semibold text-[var(--text-main)]">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </p>
           <button
             onClick={nextMonth}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3C8] hover:text-[#EEF2FF] hover:bg-white/5 transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--border-color)] transition-colors"
           >
             <ChevronRight size={16} />
           </button>
@@ -99,9 +89,7 @@ export default function StepDateTime({ selectedDate, selectedSlot, onDateChange,
         {/* Day names */}
         <div className="grid grid-cols-7 mb-1">
           {DAY_NAMES.map((d) => (
-            <p key={d} className="text-center text-xs font-medium text-[#4B5E82] py-1">
-              {d}
-            </p>
+            <p key={d} className="text-center text-xs font-medium text-[var(--text-muted)] py-1">{d}</p>
           ))}
         </div>
 
@@ -114,8 +102,9 @@ export default function StepDateTime({ selectedDate, selectedSlot, onDateChange,
             const dayDate = new Date(viewYear, viewMonth, day)
             const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
             const isPast = dayDate < todayDate
-            const isSunday = dayDate.getDay() === 0
-            const isDisabled = isPast || isSunday
+            const dayOfWeek = dayDate.getDay()
+            const isClosed = closedDays.includes(dayOfWeek)
+            const isDisabled = isPast || isClosed
             const isSelected = selectedDate === dateStr
             const isToday = dateStr === toISODate(todayDate)
 
@@ -126,12 +115,12 @@ export default function StepDateTime({ selectedDate, selectedSlot, onDateChange,
                 disabled={isDisabled}
                 className={`relative aspect-square flex items-center justify-center rounded-lg text-sm transition-all duration-150
                   ${isSelected
-                    ? 'bg-[#3B82F6] text-white font-bold shadow-[0_0_10px_rgba(59,130,246,0.4)]'
+                    ? 'bg-[var(--brand-color)] text-white font-bold shadow-[0_0_10px_color-mix(in_srgb,var(--brand-color)_40%,transparent)]'
                     : isDisabled
-                      ? 'text-[#4B5E82] opacity-40 cursor-not-allowed'
-                      : 'text-[#EEF2FF] hover:bg-white/8 cursor-pointer'
+                      ? 'text-[var(--text-muted)] opacity-40 cursor-not-allowed'
+                      : 'text-[var(--text-main)] hover:bg-[var(--border-color)] cursor-pointer'
                   }
-                  ${isToday && !isSelected ? 'ring-1 ring-[#3B82F6]/50' : ''}
+                  ${isToday && !isSelected ? 'ring-1 ring-[var(--brand-color)]/50' : ''}
                 `}
               >
                 {day}
@@ -144,31 +133,40 @@ export default function StepDateTime({ selectedDate, selectedSlot, onDateChange,
       {/* Time slots */}
       {selectedDate && (
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#4B5E82]">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             Horários disponíveis
           </p>
-          <div className="grid grid-cols-4 gap-2">
-            {TIME_SLOTS.map((slot) => {
-              const disabled = isSlotDisabled(slot)
-              const isSelected = selectedSlot === slot
-              return (
-                <button
-                  key={slot}
-                  onClick={() => !disabled && onSlotChange(slot)}
-                  disabled={disabled}
-                  className={`py-2.5 rounded-xl text-sm font-medium border transition-all duration-150
-                    ${isSelected
-                      ? 'bg-[#3B82F6] text-white border-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.3)]'
-                      : disabled
-                        ? 'bg-[#0F1628] text-[#4B5E82] border-[rgba(59,130,246,0.08)] opacity-40 cursor-not-allowed line-through'
-                        : 'bg-[#16203D] text-[#EEF2FF] border-[rgba(59,130,246,0.14)] hover:bg-[#1C2A50] hover:border-[rgba(59,130,246,0.3)] cursor-pointer'
-                    }`}
-                >
-                  {slot}
-                </button>
-              )
-            })}
-          </div>
+
+          {isLoadingSlots ? (
+            <div className="flex items-center justify-center py-8 gap-2 text-[var(--text-muted)]">
+              <Loader2 size={18} className="animate-spin" />
+              <span className="text-sm">Verificando disponibilidade…</span>
+            </div>
+          ) : availableSlots.length === 0 ? (
+            <div className="rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] p-6 text-center">
+              <p className="text-sm text-[var(--text-muted)]">Nenhum horário disponível nesta data.</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Tente selecionar outro dia.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {availableSlots.map((slot) => {
+                const isSelected = selectedSlot === slot
+                return (
+                  <button
+                    key={slot}
+                    onClick={() => onSlotChange(slot)}
+                    className={`py-2.5 rounded-xl text-sm font-medium border transition-all duration-150
+                      ${isSelected
+                        ? 'bg-[var(--brand-color)] text-white border-[var(--brand-color)] shadow-[0_0_10px_color-mix(in_srgb,var(--brand-color)_30%,transparent)]'
+                        : 'bg-[var(--bg-card)] text-[var(--text-main)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-color-hover)] cursor-pointer'
+                      }`}
+                  >
+                    {slot}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 

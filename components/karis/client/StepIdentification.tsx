@@ -21,22 +21,22 @@ export default function StepIdentification({ name, whatsapp, onNameChange, onWha
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-[#EEF2FF] text-balance">
+        <h2 className="text-xl font-semibold text-[var(--text-main)] text-balance">
           Seus dados
         </h2>
-        <p className="text-sm text-[#94A3C8] mt-1">
+        <p className="text-sm text-[var(--text-muted)] mt-1">
           Informe seu nome e WhatsApp para confirmar o agendamento
         </p>
       </div>
 
       {/* Name field */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-[#EEF2FF]" htmlFor="client-name">
+        <label className="text-sm font-medium text-[var(--text-main)]" htmlFor="client-name">
           Nome completo
         </label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
-            <User size={16} className="text-[#4B5E82]" />
+            <User size={16} className="text-[var(--text-muted)]" />
           </div>
           <input
             id="client-name"
@@ -45,9 +45,9 @@ export default function StepIdentification({ name, whatsapp, onNameChange, onWha
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="Seu nome"
             autoComplete="name"
-            className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-[#16203D] border border-[rgba(59,130,246,0.14)]
-              text-[#EEF2FF] placeholder:text-[#4B5E82] text-sm
-              focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]
+            className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)]
+              text-[var(--text-main)] placeholder:text-[var(--text-muted)] text-sm
+              focus:outline-none focus:border-[var(--brand-color)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand-color)_15%,transparent)]
               transition-all duration-200"
           />
         </div>
@@ -55,12 +55,12 @@ export default function StepIdentification({ name, whatsapp, onNameChange, onWha
 
       {/* WhatsApp field */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-[#EEF2FF]" htmlFor="client-whatsapp">
+        <label className="text-sm font-medium text-[var(--text-main)]" htmlFor="client-whatsapp">
           WhatsApp
         </label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
-            <Phone size={16} className="text-[#4B5E82]" />
+            <Phone size={16} className="text-[var(--text-muted)]" />
           </div>
           <input
             id="client-whatsapp"
@@ -70,20 +70,20 @@ export default function StepIdentification({ name, whatsapp, onNameChange, onWha
             placeholder="(11) 99999-9999"
             autoComplete="tel"
             inputMode="numeric"
-            className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-[#16203D] border border-[rgba(59,130,246,0.14)]
-              text-[#EEF2FF] placeholder:text-[#4B5E82] text-sm
-              focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]
+            className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)]
+              text-[var(--text-main)] placeholder:text-[var(--text-muted)] text-sm
+              focus:outline-none focus:border-[var(--brand-color)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand-color)_15%,transparent)]
               transition-all duration-200"
           />
         </div>
-        <p className="text-xs text-[#4B5E82]">
+        <p className="text-xs text-[var(--text-muted)]">
           Usaremos para enviar a confirmação do agendamento
         </p>
       </div>
 
       {/* Info box */}
-      <div className="rounded-xl bg-[#1D3A6E]/40 border border-[#3B82F6]/20 p-4">
-        <p className="text-xs text-[#94A3C8] leading-relaxed">
+      <div className="rounded-xl bg-[var(--bg-card)] border border-[color-mix(in_srgb,var(--brand-color)_20%,transparent)] p-4">
+        <p className="text-xs text-[var(--text-muted)] leading-relaxed">
           Seus dados são usados exclusivamente para a confirmação e lembretes do agendamento. Nenhuma conta é necessária.
         </p>
       </div>
