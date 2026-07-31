@@ -15,6 +15,7 @@ type Props = {
   services: Service[]
   professionals: Professional[]
   tenantWhatsapp: string
+  tenantName: string
   notifyWhatsapp: boolean
   isLoading: boolean
   onStatusChange: (id: string, status: AppointmentStatus) => Promise<void>
@@ -60,7 +61,7 @@ function StatusDropdown({
 
 export default function AgendaTab({
   appointments, services, professionals,
-  tenantWhatsapp, notifyWhatsapp,
+  tenantWhatsapp, tenantName, notifyWhatsapp,
   isLoading, onStatusChange,
 }: Props) {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -179,6 +180,20 @@ export default function AgendaTab({
               <p className="shrink-0 text-sm font-bold text-[#3B82F6] hidden sm:block">
                 {service ? formatPrice(service.price) : '—'}
               </p>
+
+              {/* Anti-Furo */}
+              {apt.status === 'pending' && (
+                <a
+                  href={`https://wa.me/${apt.client_whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá, ${apt.client_name}! Passando para confirmar seu horário amanhã às ${apt.time_slot.substring(0,5)} na ${tenantName}. Responda SIM para confirmar.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-500/20"
+                  title="Lembrar Cliente"
+                >
+                  <Phone size={12} />
+                  Lembrar
+                </a>
+              )}
 
               {/* Status dropdown */}
               <StatusDropdown

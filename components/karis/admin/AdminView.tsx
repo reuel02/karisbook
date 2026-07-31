@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
-  CalendarDays, Scissors, Users, Settings, Menu, X, Zap, LogOut
+  CalendarDays, Scissors, Users, Settings, Menu, X, Zap, LogOut,
+  HeartHandshake, DollarSign, Calendar
 } from 'lucide-react'
 import { Service, Professional, Appointment, AppointmentStatus } from '@/lib/karis-data'
 import {
@@ -18,11 +19,17 @@ import AgendaTab from './AgendaTab'
 import ServicesTab from './ServicesTab'
 import TeamTab from './TeamTab'
 import SettingsTab from './SettingsTab'
+import CrmTab from './CrmTab'
+import FinanceTab from './FinanceTab'
+import CalendarTab from './CalendarTab'
 
-type Tab = 'agenda' | 'services' | 'team' | 'settings'
+type Tab = 'agenda' | 'calendar' | 'crm' | 'finance' | 'services' | 'team' | 'settings'
 
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'agenda',   label: 'Agenda do Dia', icon: <CalendarDays size={18} /> },
+  { id: 'calendar', label: 'Calendário',    icon: <Calendar size={18} /> },
+  { id: 'crm',      label: 'Meus Clientes', icon: <HeartHandshake size={18} /> },
+  { id: 'finance',  label: 'Financeiro',    icon: <DollarSign size={18} /> },
   { id: 'services', label: 'Serviços',       icon: <Scissors size={18} /> },
   { id: 'team',     label: 'Equipe',         icon: <Users size={18} /> },
   { id: 'settings', label: 'Configurações',  icon: <Settings size={18} /> },
@@ -58,6 +65,7 @@ export default function AdminView() {
   const [services, setServices] = useState<Service[]>([])
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [tenantWhatsapp, setTenantWhatsapp] = useState('')
+  const [tenantName, setTenantName] = useState('')
   const [notifyWhatsapp, setNotifyWhatsapp] = useState(false)
 
   // ── Loading states ───────────────────────────────────────────────────────
@@ -86,6 +94,7 @@ export default function AdminView() {
 
     fetchTenant(tenantId).then((t) => { 
       if (t) {
+        if (t.name) setTenantName(t.name)
         if (t.whatsapp) setTenantWhatsapp(t.whatsapp) 
         if (t.slug && t.slug.includes('temporario')) {
           setIsTemporarySlug(true)
@@ -263,10 +272,20 @@ export default function AdminView() {
               services={services}
               professionals={professionals}
               tenantWhatsapp={tenantWhatsapp}
+              tenantName={tenantName}
               notifyWhatsapp={notifyWhatsapp}
               isLoading={isLoadingAgenda}
               onStatusChange={handleStatusChange}
             />
+          )}
+          {activeTab === 'calendar' && (
+            <CalendarTab services={services} />
+          )}
+          {activeTab === 'crm' && (
+            <CrmTab />
+          )}
+          {activeTab === 'finance' && (
+            <FinanceTab />
           )}
           {activeTab === 'services' && (
             <ServicesTab

@@ -420,3 +420,90 @@ export async function checkSlugAvailability(slug: string, tenantId: string): Pro
   // Se não houver erro e retornou data de outro tenant, não está disponível.
   return !data
 }
+
+// ─── Integração Dashboard (CRM, Financeiro, Calendário) ─────────────────────
+
+export async function fetchCrmData(tenantId: string) {
+  const { data, error } = await supabase
+    .schema('karisbook')
+    .from('appointments')
+    .select('client_name, client_whatsapp, date')
+    .eq('tenant_id', tenantId)
+    
+  if (error) throw new Error(error.message)
+  
+  const grouped = (data ?? []).reduce((acc: any, curr: any) => {
+    const key = curr.client_whatsapp
+    if (!acc[key]) {
+      acc[key] = {
+        client_name: curr.client_name,
+        client_whatsapp: key,
+        total_visits: 0,
+        last_visit: curr.date
+      }
+    }
+    acc[key].total_visits += 1
+    if (new Date(curr.date) > new Date(acc[key].last_visit)) {
+      acc[key].last_visit = curr.date
+    }
+    return acc
+  }, {})
+
+  return Object.values(grouped).sort((a: any, b: any) => 
+    new Date(b.last_visit).getTime() - new Date(a.last_visit).getTime()
+  )
+}
+
+export async function fetchFinanceData(tenantId: string) {
+  const { data, error } = await supabase
+    .schema('karisbook')
+    .from('appointments')
+    .select('id, service_id')
+    .eq('tenant_id', tenantId)
+    .eq('status', 'done')
+    
+  if (error) throw new Error(error.message)
+  if (!data || data.length === 0) return { totalRevenue: 0, totalDone: 0 }
+
+  const serviceIds = [...new Set(data.map((a: any) => a.service_id))]
+  
+  const { data: servicesData, error: svcError } = await supabase
+    .schema('karisbook')
+    .from('services')
+    .select('id, price')
+    .in('id', serviceIds)
+    .eq('tenant_id', tenantId)
+
+  if (svcError) throw new Error(svcError.message)
+
+  const priceMap = (servicesData ?? []).reduce((acc: any, svc: any) => {
+    acc[svc.id] = svc.price
+    return acc
+  }, {})
+
+  let totalRevenue = 0
+  data.forEach((apt: any) => {
+    totalRevenue += (priceMap[apt.service_id] || 0)
+  })
+
+  return { totalRevenue, totalDone: data.length }
+}
+
+export async function fetchCalendarAppointments(
+  tenantId: string,
+  startDate: string,
+  endDate: string
+): Promise<Appointment[]> {
+  const { data, error } = await supabase
+    .schema('karisbook')
+    .from('appointments')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date')
+    .order('time_slot')
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as Appointment[]
+}
