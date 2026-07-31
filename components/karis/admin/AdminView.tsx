@@ -186,7 +186,7 @@ export default function AdminView() {
         })}
       </div>
 
-      {/* Footer com email real do usuário logado */}
+      {/* Footer com email real do usuário logado*/}
       <div className="px-5 py-4 border-t border-[rgba(59,130,246,0.12)]">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#1D3A6E] flex items-center justify-center text-xs font-bold text-[#3B82F6]">
