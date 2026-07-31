@@ -11,6 +11,7 @@ import {
 import { useTenantId } from '@/lib/tenant-context'
 import { BusinessHour, TenantSettings } from '@/lib/karisbook-types'
 import { useToast } from '@/components/ui/Toast'
+import { Instagram, Facebook } from 'lucide-react'
 
 const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
@@ -35,6 +36,8 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
     brand_color: '#3B82F6',
     bg_color: '#080D1A',
     theme_mode: 'dark',
+    instagram_url: '',
+    facebook_url: '',
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -105,6 +108,8 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
           brand_color: settings.brand_color,
           bg_color: settings.bg_color,
           theme_mode: settings.theme_mode,
+          instagram_url: settings.instagram_url,
+          facebook_url: settings.facebook_url,
         }),
       ])
       toast.success('Configurações salvas com sucesso!')
@@ -115,6 +120,15 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar configurações.')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setTenantName(val)
+    if (!tenantSlug || tenantSlug.includes('temporario')) {
+      const generated = val.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-')
+      setTenantSlug(generated)
     }
   }
 
@@ -183,7 +197,7 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider">Nome do estabelecimento</label>
-            <input value={tenantName} onChange={(e) => setTenantName(e.target.value)} className={inputClass} />
+            <input value={tenantName} onChange={handleNameChange} className={inputClass} />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider">Slug (Link de Agendamento)</label>
@@ -218,17 +232,42 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
         </div>
       </section>
 
-      {/* Contact */}
+      {/* Contact & Socials */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-2 pb-2 border-b border-[rgba(59,130,246,0.1)]">
           <Phone size={16} className="text-[#3B82F6]" />
-          <h3 className="text-sm font-semibold text-[#EEF2FF]">Contato & WhatsApp</h3>
+          <h3 className="text-sm font-semibold text-[#EEF2FF]">Contato & Redes Sociais</h3>
         </div>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider">Número do WhatsApp (com DDI)</label>
             <input value={tenantWhatsapp} onChange={(e) => setTenantWhatsapp(e.target.value)} className={inputClass} />
             <p className="text-xs text-[#4B5E82]">Usado para receber confirmações dos clientes</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider flex items-center gap-1.5">
+                <Instagram size={14}/> Instagram URL
+              </label>
+              <input 
+                value={settings.instagram_url || ''} 
+                onChange={(e) => updateSetting('instagram_url', e.target.value)} 
+                className={inputClass} 
+                placeholder="https://instagram.com/..."
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider flex items-center gap-1.5">
+                <Facebook size={14}/> Facebook URL
+              </label>
+              <input 
+                value={settings.facebook_url || ''} 
+                onChange={(e) => updateSetting('facebook_url', e.target.value)} 
+                className={inputClass} 
+                placeholder="https://facebook.com/..."
+              />
+            </div>
           </div>
         </div>
       </section>

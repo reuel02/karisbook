@@ -7,16 +7,55 @@ import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import { startOfMonth, endOfMonth, format, isSameDay, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Appointment } from '@/lib/karis-data'
-import { X, User, Scissors } from 'lucide-react'
+import { Appointment, AppointmentStatus, STATUS_LABELS, STATUS_COLORS } from '@/lib/karis-data'
+import { X, User, Scissors, ChevronDown } from 'lucide-react'
 
-export default function CalendarTab({ services }: { services: any[] }) {
+const ALL_STATUSES: AppointmentStatus[] = ['pending', 'confirmed', 'done', 'cancelled']
+
+function StatusDropdown({
+  current, isUpdating, onSelect,
+}: { current: AppointmentStatus; isUpdating: boolean; onSelect: (s: AppointmentStatus) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative">
+      <button
+        onClick={() => !isUpdating && setOpen(!open)}
+        disabled={isUpdating}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${STATUS_COLORS[current]} disabled:opacity-60`}
+      >
+        {STATUS_LABELS[current]}
+        <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} role="presentation" />
+          <div className="absolute right-0 top-full mt-1 z-20 w-36 bg-[#16203D] border border-[rgba(59,130,246,0.2)] rounded-xl overflow-hidden shadow-xl">
+            {ALL_STATUSES.map((s) => (
+              <button
+                key={s}
+                onClick={() => { onSelect(s); setOpen(false) }}
+                className={`w-full text-left px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 ${
+                  s === current ? 'text-[#3B82F6]' : 'text-[#94A3C8]'
+                }`}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function CalendarTab({ services, onStatusChange }: { services: any[], onStatusChange?: (id: string, status: AppointmentStatus) => Promise<void> }) {
   const tenantId = useTenantId()
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date())
   const [appointmentsCache, setAppointmentsCache] = useState<Record<string, Appointment[]>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const monthKey = format(currentMonth, 'yyyy-MM')
 
@@ -60,6 +99,21 @@ export default function CalendarTab({ services }: { services: any[] }) {
   const handleDayClick = (day: Date) => {
     setSelectedDay(day)
     setShowModal(true)
+  }
+
+  const handleStatusChange = async (apt: Appointment, newStatus: AppointmentStatus) => {
+    if (!onStatusChange) return
+    setUpdatingId(apt.id)
+    await onStatusChange(apt.id, newStatus)
+    setUpdatingId(null)
+    setAppointmentsCache(prev => {
+      const mk = format(parseISO(apt.date), 'yyyy-MM')
+      if (!prev[mk]) return prev
+      return {
+        ...prev,
+        [mk]: prev[mk].map(a => a.id === apt.id ? { ...a, status: newStatus } : a)
+      }
+    })
   }
 
   const selectedDayAppointments = currentMonthAppointments.filter(a => 
@@ -141,9 +195,11 @@ export default function CalendarTab({ services }: { services: any[] }) {
                           <Scissors size={12}/> {svc?.name || 'Serviço'}
                         </p>
                       </div>
-                      <div className="shrink-0 text-xs font-semibold px-2 py-1 rounded-md bg-[rgba(59,130,246,0.1)] text-[#3B82F6] uppercase">
-                        {apt.status}
-                      </div>
+                      <StatusDropdown
+                        current={apt.status}
+                        isUpdating={updatingId === apt.id}
+                        onSelect={(s) => handleStatusChange(apt, s)}
+                      />
                     </div>
                   )
                 })

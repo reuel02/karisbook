@@ -454,14 +454,18 @@ export async function fetchCrmData(tenantId: string) {
   )
 }
 
-export async function fetchFinanceData(tenantId: string) {
-  const { data, error } = await supabase
+export async function fetchFinanceData(tenantId: string, startDate?: string, endDate?: string) {
+  let query = supabase
     .schema('karisbook')
     .from('appointments')
     .select('id, service_id')
     .eq('tenant_id', tenantId)
     .eq('status', 'done')
+
+  if (startDate) query = query.gte('date', startDate)
+  if (endDate) query = query.lte('date', endDate)
     
+  const { data, error } = await query
   if (error) throw new Error(error.message)
   if (!data || data.length === 0) return { totalRevenue: 0, totalDone: 0 }
 

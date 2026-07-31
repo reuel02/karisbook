@@ -5,19 +5,36 @@ import { fetchFinanceData } from '@/lib/karisbook-api'
 import { useTenantId } from '@/lib/tenant-context'
 import { DollarSign, Activity } from 'lucide-react'
 import { formatPrice } from '@/lib/karis-data'
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, format } from 'date-fns'
 
 export default function FinanceTab() {
   const tenantId = useTenantId()
+  const [filter, setFilter] = useState<'day' | 'week' | 'month'>('month')
   const [data, setData] = useState<{ totalRevenue: number; totalDone: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (!tenantId) return
-    fetchFinanceData(tenantId)
+    setIsLoading(true)
+
+    const now = new Date()
+    let start, end;
+    if (filter === 'day') {
+      start = format(startOfDay(now), 'yyyy-MM-dd')
+      end = format(endOfDay(now), 'yyyy-MM-dd')
+    } else if (filter === 'week') {
+      start = format(startOfWeek(now), 'yyyy-MM-dd')
+      end = format(endOfWeek(now), 'yyyy-MM-dd')
+    } else {
+      start = format(startOfMonth(now), 'yyyy-MM-dd')
+      end = format(endOfMonth(now), 'yyyy-MM-dd')
+    }
+
+    fetchFinanceData(tenantId, start, end)
       .then(setData)
       .catch(console.error)
       .finally(() => setIsLoading(false))
-  }, [tenantId])
+  }, [tenantId, filter])
 
   if (isLoading) {
     return (
@@ -31,6 +48,28 @@ export default function FinanceTab() {
 
   return (
     <div className="flex flex-col gap-6">
+      
+      <div className="flex items-center gap-2 mb-2 bg-[#16203D] p-1.5 rounded-xl border border-[rgba(59,130,246,0.1)] self-start">
+        <button 
+          onClick={() => setFilter('day')} 
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filter === 'day' ? 'bg-[#3B82F6] text-white' : 'text-[#94A3C8] hover:text-[#EEF2FF]'}`}
+        >
+          Hoje
+        </button>
+        <button 
+          onClick={() => setFilter('week')} 
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filter === 'week' ? 'bg-[#3B82F6] text-white' : 'text-[#94A3C8] hover:text-[#EEF2FF]'}`}
+        >
+          Esta Semana
+        </button>
+        <button 
+          onClick={() => setFilter('month')} 
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filter === 'month' ? 'bg-[#3B82F6] text-white' : 'text-[#94A3C8] hover:text-[#EEF2FF]'}`}
+        >
+          Este Mês
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         {/* Faturamento Bruto */}

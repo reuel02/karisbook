@@ -115,7 +115,16 @@ export default function CrmTab() {
               </div>
             </div>
             
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex justify-end gap-3">
+              <a
+                href={`https://wa.me/${selectedClient.client_whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá ${selectedClient.client_name}, tudo bem?`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-xl text-sm font-semibold transition-colors border border-emerald-500/20 flex items-center gap-2"
+              >
+                <Phone size={16} />
+                Contato
+              </a>
               <button 
                 onClick={() => setSelectedClient(null)}
                 className="px-5 py-2 bg-[#16203D] text-[#EEF2FF] hover:bg-[#1C2A50] rounded-xl text-sm font-semibold transition-colors border border-[rgba(59,130,246,0.1)]"

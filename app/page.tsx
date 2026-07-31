@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { Smartphone, LayoutDashboard, Zap, AlertCircle } from 'lucide-react'
+import { Smartphone, LayoutDashboard, Zap, AlertCircle, Instagram, Facebook } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ClientView from '@/components/karis/client/ClientView'
@@ -17,6 +17,8 @@ function AgendaContent() {
   const [brandColor, setBrandColor] = useState('#3B82F6')
   const [bgColor, setBgColor] = useState('#080D1A')
   const [themeMode, setThemeMode] = useState('dark')
+  const [instagramUrl, setInstagramUrl] = useState('')
+  const [facebookUrl, setFacebookUrl] = useState('')
 
   // Helpers de cor
   const getBrightness = (hex: string) => {
@@ -53,7 +55,7 @@ function AgendaContent() {
         const { data, error } = await supabase
           .schema('karisbook')
           .from('tenants')
-          .select('id, tenant_settings(brand_color, bg_color, theme_mode)')
+          .select('id, tenant_settings(brand_color, bg_color, theme_mode, instagram_url, facebook_url)')
           .eq('slug', tenantSlug)
           .single()
 
@@ -66,6 +68,8 @@ function AgendaContent() {
             if (settings.brand_color) setBrandColor(settings.brand_color)
             if (settings.bg_color) setBgColor(settings.bg_color)
             if (settings.theme_mode) setThemeMode(settings.theme_mode)
+            if (settings.instagram_url) setInstagramUrl(settings.instagram_url)
+            if (settings.facebook_url) setFacebookUrl(settings.facebook_url)
           }
         }
       }
@@ -142,8 +146,31 @@ function AgendaContent() {
               Visão mobile do cliente — experimente redimensionar para celular
             </p>
           </div>
-          <div className="w-full max-w-[430px] flex-1 flex flex-col">
+          <div className="w-full max-w-[430px] flex-1 flex flex-col pb-8">
             <ClientView />
+            
+            {/* Footer with Socials */}
+            <div className="mt-12 flex flex-col items-center gap-6">
+              <p className="text-sm font-semibold text-[var(--text-muted)]">Siga-nos nas redes sociais</p>
+              <div className="flex gap-4">
+                {instagramUrl && (
+                  <a href={instagramUrl} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] transition-colors">
+                    <Instagram size={20} />
+                  </a>
+                )}
+                {facebookUrl && (
+                  <a href={facebookUrl} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] transition-colors">
+                    <Facebook size={20} />
+                  </a>
+                )}
+                {!instagramUrl && !facebookUrl && (
+                  <p className="text-xs text-[var(--text-muted)] italic">Nenhuma rede social vinculada</p>
+                )}
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-4">
+                Desenvolvido por <a href="https://instagram.com/karis.tech" target="_blank" rel="noreferrer" className="font-bold text-red-500 hover:underline">Karis Tech</a>
+              </p>
+            </div>
           </div>
         </div>
       </div>

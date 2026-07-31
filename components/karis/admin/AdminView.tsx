@@ -279,7 +279,7 @@ export default function AdminView() {
             />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab services={services} />
+            <CalendarTab services={services} onStatusChange={handleStatusChange} />
           )}
           {activeTab === 'crm' && (
             <CrmTab />
