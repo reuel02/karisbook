@@ -11,7 +11,20 @@ import {
 import { useTenantId } from '@/lib/tenant-context'
 import { BusinessHour, TenantSettings } from '@/lib/karisbook-types'
 import { useToast } from '@/components/ui/Toast'
-import { Instagram, Facebook } from 'lucide-react'
+
+const InstagramIcon = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+  </svg>
+)
+
+const FacebookIcon = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+  </svg>
+)
 
 const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
@@ -204,9 +217,9 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <input 
-                  value={tenantSlug} 
-                  onChange={handleSlugChange} 
-                  className={`${inputClass} pr-10 ${!isSlugAvailable ? 'border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]' : ''}`}
+                  value={tenantSlug}
+                  disabled 
+                  className={`${inputClass} pr-10 opacity-60 cursor-not-allowed ${!isSlugAvailable ? 'border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]' : ''}`}
                   placeholder="ex: minha-barbearia"
                 />
                 {isCheckingSlug && (
@@ -248,7 +261,7 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider flex items-center gap-1.5">
-                <Instagram size={14}/> Instagram URL
+                <InstagramIcon size={14}/> Instagram URL
               </label>
               <input 
                 value={settings.instagram_url || ''} 
@@ -259,7 +272,7 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider flex items-center gap-1.5">
-                <Facebook size={14}/> Facebook URL
+                <FacebookIcon size={14}/> Facebook URL
               </label>
               <input 
                 value={settings.facebook_url || ''} 
