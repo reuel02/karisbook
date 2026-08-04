@@ -153,15 +153,15 @@ function AgendaContent() {
         <div className="sticky top-0 z-50 w-full bg-[var(--bg-card)]/95 backdrop-blur-md border-b border-[var(--border-color)]">
           <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
             {/* Brand */}
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center shrink-0">
               {logoUrl ? (
                 <img
                   src={logoUrl}
                   alt={tenantName || 'Logo'}
-                  className="h-8 w-auto max-w-[160px] object-contain object-left"
+                  className="h-12 sm:h-14 w-auto max-w-[200px] sm:max-w-[280px] object-contain object-left"
                 />
               ) : (
-                <>
+                <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-[var(--brand-color)] flex items-center justify-center">
                     <Zap size={14} className="text-white" fill="white" />
                   </div>
@@ -169,7 +169,7 @@ function AgendaContent() {
                     <p className="text-xs font-bold text-[var(--text-main)] leading-none">{tenantName || 'Karis Tech'}</p>
                     <p className="text-[10px] text-[var(--text-muted)]">Agenda</p>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
