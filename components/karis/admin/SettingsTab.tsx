@@ -392,8 +392,11 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
                   onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
                   className="block w-full text-sm text-[#4B5E82] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1D3A6E] file:text-[#3B82F6] hover:file:bg-[#3B82F6] hover:file:text-white transition-all cursor-pointer"
                 />
-                <p className="text-xs text-[#4B5E82] mt-2">PNG, JPG, SVG ou WebP até 2MB. Exibido no topo da página de agendamento.</p>
-                <p className="text-xs text-[#3B82F6] mt-1">⚠️ OBRIGATÓRIO: A imagem deve ter exatamente ou seguir a proporção de <strong>600x200 pixels</strong> (formato horizontal). Recomendado PNG com fundo transparente.</p>
+                <p className="text-xs text-[#4B5E82] mt-2">Formatos: PNG, JPG, SVG ou WebP (até 2MB). Exibido no topo da página pública.</p>
+                <div className="mt-1.5 p-2 bg-[#3B82F6]/10 border border-[#3B82F6]/20 rounded-md">
+                  <p className="text-xs text-[#3B82F6] font-medium">⚠️ TAMANHO OBRIGATÓRIO: 600x200 pixels</p>
+                  <p className="text-[10px] text-[#3B82F6]/80 mt-0.5">Envie a imagem exatamente nessa resolução para garantir o alinhamento perfeito. Recomendamos usar PNG sem fundo.</p>
+                </div>
               </div>
             </div>
           </div>

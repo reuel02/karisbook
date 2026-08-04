@@ -158,7 +158,7 @@ function AgendaContent() {
                 <img
                   src={logoUrl}
                   alt={tenantName || 'Logo'}
-                  className="h-12 sm:h-14 w-auto max-w-[200px] sm:max-w-[280px] object-contain object-left"
+                  className="h-16 sm:h-20 w-auto max-w-[240px] sm:max-w-[320px] object-contain object-left"
                 />
               ) : (
                 <div className="flex items-center gap-2.5">
