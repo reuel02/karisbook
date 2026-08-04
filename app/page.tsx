@@ -81,25 +81,36 @@ function AgendaContent() {
           setTenantName(tenant.name || '')
           setIsTenantValid(true)
 
-          // Step 2: load settings separately (gracefully handles missing columns)
-          try {
-            const { data: settings } = await supabase
+          // Step 2: load settings (gracefully handles missing columns with fallback)
+          const { data: settings, error: settingsError } = await supabase
+            .schema('karisbook')
+            .from('tenant_settings')
+            .select('brand_color, bg_color, theme_mode, instagram_url, facebook_url, logo_url')
+            .eq('tenant_id', tenant.id)
+            .single()
+
+          if (settingsError) {
+            // Some optional columns may not exist yet — retry with only the guaranteed base columns
+            console.warn('Settings full query failed, retrying with base columns:', settingsError.message)
+            const { data: baseSettings } = await supabase
               .schema('karisbook')
               .from('tenant_settings')
-              .select('brand_color, bg_color, theme_mode, instagram_url, facebook_url, logo_url')
+              .select('brand_color, bg_color, theme_mode')
               .eq('tenant_id', tenant.id)
               .single()
 
-            if (settings) {
-              if (settings.brand_color) setBrandColor(settings.brand_color)
-              if (settings.bg_color) setBgColor(settings.bg_color)
-              if (settings.theme_mode) setThemeMode(settings.theme_mode)
-              if (settings.instagram_url) setInstagramUrl(settings.instagram_url)
-              if (settings.facebook_url) setFacebookUrl(settings.facebook_url)
-              if (settings.logo_url) setLogoUrl(settings.logo_url)
+            if (baseSettings) {
+              if (baseSettings.brand_color) setBrandColor(baseSettings.brand_color)
+              if (baseSettings.bg_color) setBgColor(baseSettings.bg_color)
+              if (baseSettings.theme_mode) setThemeMode(baseSettings.theme_mode)
             }
-          } catch {
-            // tenant_settings may not have all columns yet — page still works with defaults
+          } else if (settings) {
+            if (settings.brand_color) setBrandColor(settings.brand_color)
+            if (settings.bg_color) setBgColor(settings.bg_color)
+            if (settings.theme_mode) setThemeMode(settings.theme_mode)
+            if (settings.instagram_url) setInstagramUrl(settings.instagram_url)
+            if (settings.facebook_url) setFacebookUrl(settings.facebook_url)
+            if (settings.logo_url) setLogoUrl(settings.logo_url)
           }
         }
       }
