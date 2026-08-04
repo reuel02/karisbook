@@ -68,26 +68,38 @@ function AgendaContent() {
       // Check tenant from URL
       const tenantSlug = searchParams.get('tenant')
       if (tenantSlug) {
-        const { data, error } = await supabase
+        // Step 1: validate tenant by slug (minimal query — never fails due to missing settings columns)
+        const { data: tenant, error: tenantError } = await supabase
           .schema('karisbook')
           .from('tenants')
-          .select('id, name, tenant_settings(brand_color, bg_color, theme_mode, instagram_url, facebook_url, logo_url)')
+          .select('id, name')
           .eq('slug', tenantSlug)
           .single()
 
-        if (data && !error) {
-          setTenantId(data.id)
-          setTenantName(data.name || '')
+        if (tenant && !tenantError) {
+          setTenantId(tenant.id)
+          setTenantName(tenant.name || '')
           setIsTenantValid(true)
-          
-          const settings = data.tenant_settings?.[0] || data.tenant_settings
-          if (settings) {
-            if (settings.brand_color) setBrandColor(settings.brand_color)
-            if (settings.bg_color) setBgColor(settings.bg_color)
-            if (settings.theme_mode) setThemeMode(settings.theme_mode)
-            if (settings.instagram_url) setInstagramUrl(settings.instagram_url)
-            if (settings.facebook_url) setFacebookUrl(settings.facebook_url)
-            if (settings.logo_url) setLogoUrl(settings.logo_url)
+
+          // Step 2: load settings separately (gracefully handles missing columns)
+          try {
+            const { data: settings } = await supabase
+              .schema('karisbook')
+              .from('tenant_settings')
+              .select('brand_color, bg_color, theme_mode, instagram_url, facebook_url, logo_url')
+              .eq('tenant_id', tenant.id)
+              .single()
+
+            if (settings) {
+              if (settings.brand_color) setBrandColor(settings.brand_color)
+              if (settings.bg_color) setBgColor(settings.bg_color)
+              if (settings.theme_mode) setThemeMode(settings.theme_mode)
+              if (settings.instagram_url) setInstagramUrl(settings.instagram_url)
+              if (settings.facebook_url) setFacebookUrl(settings.facebook_url)
+              if (settings.logo_url) setLogoUrl(settings.logo_url)
+            }
+          } catch {
+            // tenant_settings may not have all columns yet — page still works with defaults
           }
         }
       }
