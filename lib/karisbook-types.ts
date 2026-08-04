@@ -63,6 +63,9 @@ export interface TenantSettings {
   brand_color?: string
   bg_color?: string
   theme_mode?: string
+  logo_url?: string
+  instagram_url?: string
+  facebook_url?: string
 }
 
 export interface Tenant {

@@ -28,11 +28,13 @@ function AgendaContent() {
   const [isTenantValid, setIsTenantValid] = useState(false)
   const [isCheckingTenant, setIsCheckingTenant] = useState(true)
   const [tenantId, setTenantId] = useState<string>('')
+  const [tenantName, setTenantName] = useState<string>('')
   const [brandColor, setBrandColor] = useState('#3B82F6')
   const [bgColor, setBgColor] = useState('#080D1A')
   const [themeMode, setThemeMode] = useState('dark')
   const [instagramUrl, setInstagramUrl] = useState('')
   const [facebookUrl, setFacebookUrl] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
 
   // Helpers de cor
   const getBrightness = (hex: string) => {
@@ -69,12 +71,13 @@ function AgendaContent() {
         const { data, error } = await supabase
           .schema('karisbook')
           .from('tenants')
-          .select('id, tenant_settings(brand_color, bg_color, theme_mode, instagram_url, facebook_url)')
+          .select('id, name, tenant_settings(brand_color, bg_color, theme_mode, instagram_url, facebook_url, logo_url)')
           .eq('slug', tenantSlug)
           .single()
 
         if (data && !error) {
           setTenantId(data.id)
+          setTenantName(data.name || '')
           setIsTenantValid(true)
           
           const settings = data.tenant_settings?.[0] || data.tenant_settings
@@ -84,6 +87,7 @@ function AgendaContent() {
             if (settings.theme_mode) setThemeMode(settings.theme_mode)
             if (settings.instagram_url) setInstagramUrl(settings.instagram_url)
             if (settings.facebook_url) setFacebookUrl(settings.facebook_url)
+            if (settings.logo_url) setLogoUrl(settings.logo_url)
           }
         }
       }
@@ -127,13 +131,23 @@ function AgendaContent() {
           <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
             {/* Brand */}
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-7 h-7 rounded-lg bg-[var(--brand-color)] flex items-center justify-center">
-                <Zap size={14} className="text-white" fill="white" />
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-[var(--text-main)] leading-none">Karis Tech</p>
-                <p className="text-[10px] text-[var(--text-muted)]">Agenda</p>
-              </div>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={tenantName || 'Logo'}
+                  className="h-8 w-auto max-w-[160px] object-contain object-left"
+                />
+              ) : (
+                <>
+                  <div className="w-7 h-7 rounded-lg bg-[var(--brand-color)] flex items-center justify-center">
+                    <Zap size={14} className="text-white" fill="white" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-xs font-bold text-[var(--text-main)] leading-none">{tenantName || 'Karis Tech'}</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">Agenda</p>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Admin Access Button (Ghost Button logic) */}

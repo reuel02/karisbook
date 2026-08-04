@@ -4,6 +4,31 @@ import type {
   BusinessHour, TenantSettings,
 } from './karisbook-types'
 
+// ─── Logo Upload ───────────────────────────────────────────────────────────────
+
+export async function uploadTenantLogo(tenantId: string, file: File): Promise<string> {
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error('O logotipo deve ter no máximo 2MB.')
+  }
+
+  const fileExt = file.name.split('.').pop()
+  const filePath = `logos/${tenantId}/logo-${Date.now()}.${fileExt}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('karisbook-assets')
+    .upload(filePath, file, { upsert: true })
+
+  if (uploadError) {
+    throw new Error(`Erro ao fazer upload: ${uploadError.message}`)
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('karisbook-assets')
+    .getPublicUrl(filePath)
+
+  return publicUrl
+}
+
 // ─── Services ─────────────────────────────────────────────────────────────────
 
 export async function fetchServices(tenantId: string): Promise<Service[]> {

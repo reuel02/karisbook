@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Store, Phone, Clock, Bell, Copy, Link as LinkIcon, Palette } from 'lucide-react'
+import { Store, Phone, Clock, Bell, Copy, Palette, ImagePlus, X } from 'lucide-react'
 import {
   fetchTenant, saveTenantInfo,
   fetchBusinessHours, saveBusinessHours,
   fetchTenantSettings, saveTenantSettings,
-  checkSlugAvailability
+  checkSlugAvailability, uploadTenantLogo
 } from '@/lib/karisbook-api'
 import { useTenantId } from '@/lib/tenant-context'
 import { BusinessHour, TenantSettings } from '@/lib/karisbook-types'
@@ -49,9 +49,11 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
     brand_color: '#3B82F6',
     bg_color: '#080D1A',
     theme_mode: 'dark',
+    logo_url: '',
     instagram_url: '',
     facebook_url: '',
   })
+  const [logoFile, setLogoFile] = useState<File | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -111,6 +113,13 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
   const handleSave = async () => {
     setIsSaving(true)
     try {
+      // Upload logo first if a new file was selected
+      let currentLogoUrl = settings.logo_url || ''
+      if (logoFile) {
+        currentLogoUrl = await uploadTenantLogo(tenantId, logoFile)
+        setLogoFile(null)
+      }
+
       await Promise.all([
         saveTenantInfo(tenantId, { name: tenantName, address: tenantAddress, whatsapp: tenantWhatsapp, slug: tenantSlug }),
         saveBusinessHours(tenantId, hours),
@@ -121,10 +130,12 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
           brand_color: settings.brand_color,
           bg_color: settings.bg_color,
           theme_mode: settings.theme_mode,
+          logo_url: currentLogoUrl,
           instagram_url: settings.instagram_url,
           facebook_url: settings.facebook_url,
         }),
       ])
+      updateSetting('logo_url', currentLogoUrl)
       toast.success('Configurações salvas com sucesso!')
       if (tenantSlug && !tenantSlug.includes('temporario')) {
         onSlugUpdated?.()
@@ -139,16 +150,8 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     setTenantName(val)
-    if (!tenantSlug || tenantSlug.includes('temporario')) {
-      const generated = val.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-')
-      setTenantSlug(generated)
-    }
-  }
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    const formatted = raw.toLowerCase().replace(/[^a-z0-9-]/g, '')
-    setTenantSlug(formatted)
+    const generated = val.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    setTenantSlug(generated)
   }
 
   useEffect(() => {
@@ -218,7 +221,7 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
               <div className="flex-1 relative">
                 <input 
                   value={tenantSlug}
-                  disabled 
+                  readOnly 
                   className={`${inputClass} pr-10 opacity-60 cursor-not-allowed ${!isSlugAvailable ? 'border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]' : ''}`}
                   placeholder="ex: minha-barbearia"
                 />
@@ -354,6 +357,47 @@ export default function SettingsTab({ onSlugUpdated }: { onSlugUpdated?: () => v
           <h3 className="text-sm font-semibold text-[#EEF2FF]">Aparência da Marca</h3>
         </div>
         <div className="flex flex-col gap-4">
+
+          {/* Logo Upload */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider">Logotipo</label>
+            <div className="flex items-start gap-4">
+              {/* Preview */}
+              {(logoFile || settings.logo_url) ? (
+                <div className="relative shrink-0 group">
+                  <img
+                    src={logoFile ? URL.createObjectURL(logoFile) : settings.logo_url!}
+                    alt="Logo"
+                    className="w-20 h-20 object-contain rounded-xl border border-[rgba(59,130,246,0.2)] bg-[#111830] p-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setLogoFile(null); updateSetting('logo_url', '') }}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remover logo"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-[rgba(59,130,246,0.2)] flex items-center justify-center bg-[#111830] shrink-0">
+                  <ImagePlus size={24} className="text-[#4B5E82]" />
+                </div>
+              )}
+              {/* Input */}
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.svg,.webp"
+                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-[#4B5E82] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1D3A6E] file:text-[#3B82F6] hover:file:bg-[#3B82F6] hover:file:text-white transition-all cursor-pointer"
+                />
+                <p className="text-xs text-[#4B5E82] mt-2">PNG, JPG, SVG ou WebP até 2MB. Exibido na página pública de agendamento.</p>
+                <p className="text-xs text-[#3B82F6] mt-1">⚠️ Recomendado: PNG com fundo transparente, sem margens.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-[#94A3C8] uppercase tracking-wider">Cor Principal</label>
             <div className="flex items-center gap-3">
