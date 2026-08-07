@@ -58,6 +58,16 @@ function AgendaContent() {
     '--border-color-hover': isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
   } as React.CSSProperties
 
+  // Sincroniza a cor de fundo com o body/html para o "bounce" do iOS (iPhone)
+  useEffect(() => {
+    document.documentElement.style.backgroundColor = bgColor
+    document.body.style.backgroundColor = bgColor
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', bgColor)
+    }
+  }, [bgColor])
+
 
   useEffect(() => {
     const init = async () => {
